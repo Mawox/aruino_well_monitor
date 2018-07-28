@@ -1,6 +1,14 @@
 #include <Arduino.h>
+#include <NewPing.h>
 
 #define PI 3.1415926535897932384626433832795
+
+// setup sonar pins
+#define SONAR_GND 0
+#define SONAR_5V 3
+#define SONAR_TRIG 2
+#define SONAR_ECHO 1
+NewPing sonar(SONAR_TRIG, SONAR_ECHO);
 
 const int WELL_RADIUS = 1000; // in milimeters
 int WATER_LEVEL_MIN = 10000; // in milimeters from sensor
@@ -9,6 +17,16 @@ const int VALUES_TO_KEEP = 7*24*60;
 int history[VALUES_TO_KEEP]; // array of last weeks worh of data. 
 int circ_index = 0;
 int MINUTE = 60000; //ms
+
+
+
+void setup_sonar() {
+    pinMode(SONAR_GND, OUTPUT);
+    pinMode(SONAR_5V, OUTPUT);
+    digitalWrite(SONAR_GND, LOW);
+    digitalWrite(SONAR_5V, HIGH);
+}
+
 
 void read_sd_card() {
     memcpy(history, history, sizeof(history)*sizeof(int) ); //used to load history into memeory
@@ -24,13 +42,16 @@ int get_value(int* array, int pos){
 
 void update_array(int new_value, int* array) {
     array[circ_index] = new_value;
-    Serial.println(array[circ_index]);
+    //SerialUSB.println(array[circ_index]);
     circ_index = (circ_index+1)%VALUES_TO_KEEP;
 
 }
 
 void measure() {
-    //TODO add sensor logic
+    delay(50);
+    SerialUSB.print("Ping: ");
+    SerialUSB.print(sonar.ping_cm());
+    SerialUSB.println("cm");
     int new_water_level = 8;
 
     update_array(new_water_level, history);
@@ -47,29 +68,31 @@ void save_data(int* hist_array, int MAX, int MIN) {
 
 void display_data(int* data) {
     int volume_now = water_volume(data[0]);
-    Serial.println(volume_now);
+  //  SerialUSB.println(volume_now);
 
-    for(int i = 0; i < 10; i++) // print last ten values
-        {
-        Serial.println(data[i]);
-        }
+ //   for(int i = 0; i < 10; i++) // print last ten values
+  //      {
+   //     SerialUSB.println(data[i]);
+    //    }
     //TODO add display logic;
 }
 
 void setup() {
-      // Open serial communications and wait for port to open:
-    Serial.begin(115200);
-    while (!Serial) {
-        ; // wait for serial port to connect. Needed for native USB port only
-    }
-
-    Serial.println("Started");
+      // Open Serial communications and wait for port to open:
+    SerialUSB.begin(115200);
+    
+    //while (!Serial) {
+    //    ; // wait for Serial port to connect. Needed for native USB port only
+    //}    
+    while (!SerialUSB) ;
+    SerialUSB.println("Started");
+    setup_sonar();
     read_sd_card(); // load history into memory after reboot
 }
 
 void loop() {
-    Serial.println("Updating...");
-    delay(MINUTE/20);
+    //SerialUSB.println("Updating...");
+    //delay(MINUTE/30);
     measure(); // get new data
     save_data(history, WATER_LEVEL_MAX, WATER_LEVEL_MIN); // save data in case of a crash
     display_data(history); // show data on display
