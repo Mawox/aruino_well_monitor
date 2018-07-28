@@ -3,12 +3,10 @@
 
 #define PI 3.1415926535897932384626433832795
 
-// setup sonar pins
-#define SONAR_GND 0
-#define SONAR_5V 3
+// setup sonar
 #define SONAR_TRIG 2
 #define SONAR_ECHO 1
-NewPing sonar(SONAR_TRIG, SONAR_ECHO);
+NewPing sonar(SONAR_TRIG, SONAR_ECHO, 600);
 
 const int WELL_RADIUS = 1000; // in milimeters
 int WATER_LEVEL_MIN = 10000; // in milimeters from sensor
@@ -20,12 +18,7 @@ int MINUTE = 60000; //ms
 
 
 
-void setup_sonar() {
-    pinMode(SONAR_GND, OUTPUT);
-    pinMode(SONAR_5V, OUTPUT);
-    digitalWrite(SONAR_GND, LOW);
-    digitalWrite(SONAR_5V, HIGH);
-}
+
 
 
 void read_sd_card() {
@@ -48,7 +41,7 @@ void update_array(int new_value, int* array) {
 }
 
 void measure() {
-    delay(50);
+    delay(500);
     SerialUSB.print("Ping: ");
     SerialUSB.print(sonar.ping_cm());
     SerialUSB.println("cm");
@@ -80,13 +73,15 @@ void display_data(int* data) {
 void setup() {
       // Open Serial communications and wait for port to open:
     SerialUSB.begin(115200);
+    pinMode(SONAR_ECHO,INPUT_PULLUP);
     
     //while (!Serial) {
     //    ; // wait for Serial port to connect. Needed for native USB port only
     //}    
     while (!SerialUSB) ;
     SerialUSB.println("Started");
-    setup_sonar();
+    
+
     read_sd_card(); // load history into memory after reboot
 }
 
